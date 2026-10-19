@@ -1,0 +1,30 @@
+LEDGERLINE - QUICK START
+========================
+
+WINDOWS
+  1. Install Python once (skip if you already have it):
+       https://www.python.org/downloads/
+     In the installer, TICK the box "Add python.exe to PATH".
+  2. Double-click  start.bat
+     The first time it needs 2-5 minutes and internet to prepare itself.
+     Later it starts in seconds.
+  3. Your browser opens. Create your administrator account, then fill in
+     your business name, currency and logo.
+
+MAC
+  Double-click  start.command   (if the Mac blocks it: right-click > Open)
+
+LINUX
+  Run  ./start.sh
+
+TO STOP THE APP
+  Close the black window.
+
+IMPORTANT - YOUR DATA
+  * Your invoices live in the "data" folder.
+  * Your private keys live in the file ".env".
+  Copy BOTH to a safe place regularly (a USB drive or cloud folder).
+  Without ".env" saved client details cannot be read.
+
+NEED HELP?
+  Open "Help & Guide" inside the app.

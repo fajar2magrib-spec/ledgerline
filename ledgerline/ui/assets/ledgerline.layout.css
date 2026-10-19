@@ -1,0 +1,170 @@
+/* =====================================================================================
+   Ledgerline - layout stability layer (loaded AFTER ledgerline.base.css)
+   Goals: a visible sidebar toggle, fixed uniform sizes, no layout shift, no flicker.
+   Test ids below were verified against the Streamlit frontend bundle:
+   stSidebar, stSidebarContent, stSidebarCollapseButton, stExpandSidebarButton,
+   stSidebarResizeHandle, stHeader, stMain.
+   ===================================================================================== */
+
+:root {
+  --lg-sidebar-width: 288px;
+  --lg-control-height: 44px;      /* every nav item and button */
+  --lg-card-radius: 16px;
+  --lg-kpi-height: 156px;
+  --lg-border: rgba(128, 128, 128, .26);
+  --lg-accent: #2563EB;
+}
+
+/* ---- 1. Page chrome: hide only Streamlit's footer; NEVER the header/toggle ---------- */
+footer, #MainMenu { display: none !important; }
+header[data-testid="stHeader"] { background: transparent !important; height: 3.25rem; }
+.block-container { padding: 3.5rem 2rem 3rem !important; max-width: 1440px; margin: 0 auto; }
+
+/* ---- 2. Sidebar toggle: always visible, clearly an arrow button --------------------- */
+[data-testid="stExpandSidebarButton"],
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarCollapsedControl"] button {
+  visibility: visible !important; opacity: 1 !important; display: inline-flex !important;
+  align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 12px;
+  border: 1px solid var(--lg-border);
+  background: var(--background-color, rgba(255, 255, 255, .92));
+  box-shadow: 0 2px 10px rgba(16, 24, 40, .12);
+  cursor: pointer; transition: box-shadow .15s ease, border-color .15s ease;
+}
+[data-testid="stExpandSidebarButton"]:hover,
+[data-testid="stSidebarCollapseButton"] button:hover { border-color: var(--lg-accent); box-shadow: 0 4px 14px rgba(37, 99, 235, .25); }
+[data-testid="stExpandSidebarButton"] { position: relative; z-index: 1000002; margin: .35rem 0 0 .6rem; }
+
+/* ---- 3. Fixed sidebar width (only when open, so collapsing still works) ------------- */
+section[data-testid="stSidebar"][aria-expanded="true"] {
+  min-width: var(--lg-sidebar-width) !important;
+  max-width: var(--lg-sidebar-width) !important;
+  width: var(--lg-sidebar-width) !important;
+}
+[data-testid="stSidebarResizeHandle"] { display: none !important; }   /* no drag-resize: uniform width */
+[data-testid="stSidebarContent"] { padding: .5rem .85rem 1rem; overflow-x: hidden; }
+
+/* ---- 4. Uniform sidebar menu items and buttons -------------------------------------- */
+[data-testid="stSidebar"] [role="radiogroup"] { gap: .4rem; width: 100%; }
+[data-testid="stSidebar"] [role="radiogroup"] > label {
+  box-sizing: border-box; width: 100%; height: var(--lg-control-height); min-height: var(--lg-control-height);
+  display: flex !important; align-items: center; padding: 0 .85rem !important; margin: 0 !important;
+  border-radius: 12px; border: 1px solid transparent; font-weight: 600; font-size: .95rem; white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease;
+}
+[data-testid="stSidebar"] [role="radiogroup"] > label:hover { background: rgba(128, 128, 128, .12); }
+[data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) {
+  background: rgba(37, 99, 235, .14); border-color: rgba(37, 99, 235, .45); color: var(--lg-accent);
+}
+[data-testid="stSidebar"] [role="radiogroup"] > label > div:first-child { display: none; }  /* hide the radio dot: it is a menu */
+[data-testid="stSidebar"] .stButton > button,
+[data-testid="stSidebar"] .stDownloadButton > button,
+[data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+  box-sizing: border-box; min-height: var(--lg-control-height); height: var(--lg-control-height);
+  border-radius: 12px; font-weight: 600;
+}
+
+/* ---- 5. Uniform buttons in the main area -------------------------------------------- */
+.stButton > button, .stDownloadButton > button, .stLinkButton > a, [data-testid="stFormSubmitButton"] > button {
+  box-sizing: border-box; min-height: var(--lg-control-height); border-radius: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ---- 6. Cards: fixed KPI height, equal-height chart rows ---------------------------- */
+.kpi { height: auto; min-height: var(--lg-kpi-height); box-sizing: border-box; border-radius: var(--lg-card-radius); }
+/* The value must never shrink: with overflow:hidden a flex item can collapse to 0 height
+   when the footer wraps, which is what cut the big number in half. */
+.kpi__value { flex: 0 0 auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; padding-bottom: .15rem; }
+.kpi__foot { min-height: 28px; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-radius: var(--lg-card-radius); }
+
+/* ---- 7. No layout shift when the scrollbar appears or the sidebar toggles ------------ */
+html { scrollbar-gutter: stable; }
+[data-testid="stMain"] { scrollbar-gutter: stable; overflow-y: scroll; }
+[data-testid="stMain"], .block-container { transition: none !important; }
+
+/* ---- 8. No flicker: keep elements fully opaque while a rerun is in flight ------------ */
+[data-stale="true"], .stale-element { opacity: 1 !important; transition: none !important; }
+[data-testid="stSidebar"] *, [data-testid="stMain"] [data-testid="stVerticalBlock"] { animation: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---- 9. Empty states: padded, modern, consistent ------------------------------------ */
+.empty-card {
+  box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: .35rem; padding: 2.75rem 1.5rem; border-radius: var(--lg-card-radius);
+  border: 1px dashed var(--lg-border); background: rgba(128, 128, 128, .05);
+}
+.empty-card--chart { min-height: 340px; padding: 1.5rem; }
+.empty-card__icon { font-size: 2.1rem; line-height: 1; width: 64px; height: 64px; display: grid; place-items: center;
+  border-radius: 18px; background: rgba(37, 99, 235, .12); margin-bottom: .6rem; }
+.empty-card__title { font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+.empty-card__text { max-width: 440px; margin: 0; font-size: .95rem; line-height: 1.55; opacity: .68; }
+
+/* ---- 10. Fallback / error card ------------------------------------------------------- */
+.error-card {
+  box-sizing: border-box; padding: 1.1rem 1.25rem; border-radius: var(--lg-card-radius);
+  border: 1px solid rgba(229, 72, 77, .4); background: rgba(229, 72, 77, .08);
+}
+.error-card b { display: block; margin-bottom: .2rem; }
+.error-card small { opacity: .7; }
+
+/* ---- 11. Narrow screens: Streamlit overlays the sidebar; keep content readable ------- */
+@media (max-width: 768px) { .block-container { padding: 3.5rem 1rem 2rem !important; } }
+
+
+/* ---- 9. Premium polish -------------------------------------------------------------- */
+.stApp { background-image: radial-gradient(1100px 380px at 85% -80px, rgba(37,99,235,.07), transparent 70%); }
+.dash-title { background: linear-gradient(90deg, var(--lg-accent), #7C3AED 70%); -webkit-background-clip: text;
+  background-clip: text; -webkit-text-fill-color: transparent; }
+.kpi { background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(128,128,128,.05)); }
+.kpi__value { font-variant-numeric: tabular-nums; }
+.kpi__icon { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.stTabs [data-baseweb="tab"] { font-weight: 600; }
+[data-testid="stPills"] button, [data-testid="stPills"] [role="button"] { font-weight: 600; }
+
+/* Pill status badges with a coloured dot */
+.pill { display: inline-flex; align-items: center; gap: .4rem; padding: .22rem .65rem; border-radius: 999px;
+  font-size: .76rem; font-weight: 700; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill--up { color: #0F9D74; background: rgba(15,157,116,.13); }
+.pill--down { color: #E5484D; background: rgba(229,72,77,.13); }
+.pill--warn { color: #C98A00; background: rgba(224,161,0,.16); }
+.pill--info { color: #2563EB; background: rgba(37,99,235,.13); }
+.pill--neutral { color: #8B95A5; background: rgba(139,149,165,.18); }
+
+/* Data tables (HTML, replaces the plain grid) */
+.lg-table-wrap { overflow: auto; border: 1px solid var(--lg-border); border-radius: 14px; }
+.lg-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .88rem; }
+.lg-table th { position: sticky; top: 0; z-index: 1; text-align: left; padding: .7rem .9rem; font-size: .72rem;
+  font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+  background: color-mix(in srgb, var(--lg-accent) 7%, #f4f6fa); color: #475467; border-bottom: 1px solid var(--lg-border); }
+.lg-table td { padding: .65rem .9rem; border-bottom: 1px solid rgba(128,128,128,.14); white-space: nowrap; vertical-align: middle; }
+.lg-table tbody tr:last-child td { border-bottom: 0; }
+.lg-table tbody tr:hover td { background: rgba(37,99,235,.06); }
+.lg-table .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.lg-table th.num { text-align: right; }
+.lg-table .muted { opacity: .6; }
+.lg-table .strong { font-weight: 700; }
+.lg-table-empty { padding: 1.4rem; text-align: center; opacity: .6; }
+.who { display: inline-flex; align-items: center; gap: .6rem; }
+.who__av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .72rem;
+  font-weight: 800; color: #fff; flex: none; }
+@media (prefers-color-scheme: dark) {
+  .lg-table th { background: #1B2230; color: #AAB2C0; }   /* opaque: it is sticky, rows scroll under it */
+  .kpi { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(128,128,128,.04)); }
+}
+
+/* Help page step cards */
+.step-num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800;
+  color: #fff; background: linear-gradient(135deg, var(--lg-accent), #7C3AED); margin-bottom: .6rem; }
+
+/* ---- centred notice (success after saving, or what to fix) ---- */
+.lg-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000000;
+  display: flex; align-items: center; gap: .8rem; max-width: min(560px, 90vw); padding: 1.1rem 1.5rem;
+  border-radius: 18px; color: #fff; font-weight: 700; font-size: 1.05rem; line-height: 1.4; pointer-events: none;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .35); backdrop-filter: blur(6px); }
+.lg-popup--success { background: linear-gradient(135deg, #0F9D74, #0B7F5E); }
+.lg-popup--error { background: linear-gradient(135deg, #E5484D, #C2272D); }
+.lg-popup--warning { background: linear-gradient(135deg, #E0A100, #B87F00); }
+.lg-popup__icon { font-size: 1.7rem; line-height: 1; }

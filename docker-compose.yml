@@ -1,0 +1,23 @@
+# One command for a small server:  docker compose up -d --build
+# Then open http://SERVER-IP:8501  (put HTTPS in front, e.g. Caddy or a Cloudflare Tunnel, before real use).
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ledgerline
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in a .env file next to this file}
+      POSTGRES_DB: ledgerline
+    volumes: [dbdata:/var/lib/postgresql/data]
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [db]
+    ports: ["8501:8501"]
+    environment:
+      LEDGERLINE_ENV: production
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (32+ random characters) in the .env file}
+      DATABASE_URL: postgresql+psycopg://ledgerline:${DB_PASSWORD}@db:5432/ledgerline
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}      # set true once you serve it over HTTPS
+volumes:
+  dbdata:

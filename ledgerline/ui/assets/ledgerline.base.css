@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp button {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* (chrome rules live in the 'Layout stability' section below) */
+
+/* Header */
+.dash-header { display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: .35rem; min-height: 64px; }
+.dash-title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.025em;
+    line-height: 1.15; margin: 0; }
+.dash-sub { opacity: .62; font-size: .92rem; margin-top: .25rem; }
+.live-pill { display: inline-flex; align-items: center; gap: .5rem;
+    padding: .35rem .85rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+    color: #0F9D74; background: rgba(15,157,116,.1);
+    border: 1px solid rgba(15,157,116,.28); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #0F9D74;
+    animation: pulse 2.2s infinite; }
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(15,157,116,.5); }
+    70% { box-shadow: 0 0 0 8px rgba(15,157,116,0); }
+    100% { box-shadow: 0 0 0 0 rgba(15,157,116,0); }
+}
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+/* Bordered containers act as cards */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 16px; border-color: rgba(128,128,128,.24);
+}
+
+/* Widget labels */
+[data-testid="stWidgetLabel"] p { font-size: .8rem; font-weight: 600; opacity: .78; }
+
+/* KPI cards */
+.kpi { position: relative; overflow: hidden; min-height: 152px; box-sizing: border-box;
+    padding: 1.1rem 1.25rem 1rem; border-radius: 16px;
+    border: 1px solid rgba(128,128,128,.24); background: rgba(128,128,128,.06);
+    box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 20px rgba(16,24,40,.05);
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: var(--accent); }
+.kpi:hover { transform: translateY(-4px); border-color: var(--accent);
+    box-shadow: 0 14px 30px rgba(16,24,40,.14); }
+.kpi__top { display: flex; align-items: center; justify-content: space-between; }
+.kpi__label { font-size: .86rem; font-weight: 600; opacity: .72; }
+.kpi__icon { width: 34px; height: 34px; border-radius: 10px; display: grid;
+    place-items: center; font-size: 1.05rem;
+    background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.kpi__value { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.1; margin: .55rem 0 .65rem; white-space: nowrap; }
+.kpi__foot { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; }
+.kpi__hint { font-size: .78rem; opacity: .6; }
+
+/* Status badges */
+.badge { display: inline-flex; align-items: center; padding: .2rem .6rem;
+    border-radius: 999px; font-size: .76rem; font-weight: 700; }
+.badge--up { color: #0F9D74; background: rgba(15,157,116,.13); }
+.badge--down { color: #E5484D; background: rgba(229,72,77,.13); }
+.badge--warn { color: #C98A00; background: rgba(224,161,0,.16); }
+.badge--neutral { color: #8B95A5; background: rgba(139,149,165,.18); }
+
+/* Sidebar */
+[data-testid="stSidebar"] { border-right: 1px solid rgba(128,128,128,.2); }
+.side-brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin: .2rem 0 0; }
+.side-sub { font-size: .8rem; opacity: .6; margin: .1rem 0 1.1rem; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap: .35rem; }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+    padding: .55rem .75rem; border-radius: 10px; width: 100%;
+    border: 1px solid transparent; transition: background .15s ease; }
+[data-testid="stSidebar"] [role="radiogroup"] label:hover { background: rgba(128,128,128,.1); }
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+    background: rgba(37,99,235,.12); border-color: rgba(37,99,235,.35); font-weight: 700; }
+.side-card { margin-top: 1.4rem; padding: .8rem .9rem; border-radius: 12px; font-size: .82rem;
+    border: 1px solid rgba(128,128,128,.24); background: rgba(128,128,128,.06); }
+.side-card b { display: block; font-size: .78rem; opacity: .65; font-weight: 600; margin-bottom: .15rem; }
+
+/* Entry form */
+[data-testid="stForm"] { border: none; padding: 0; }
+.form-note { font-size: .86rem; padding: .7rem .9rem; border-radius: 12px; margin-bottom: .9rem;
+    border: 1px solid rgba(224,161,0,.35); background: rgba(224,161,0,.1); }
+
+/* Invoice actions */
+.invoice-strip { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1.4rem;
+    margin: .2rem 0 .9rem; font-size: .9rem; }
+.invoice-strip .k { opacity: .6; margin-right: .35rem; }
+
+/* Login and sidebar user */
+.login-brand { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; text-align: center; }
+.login-sub { opacity: .62; text-align: center; margin: .2rem 0 1.2rem; }
+.side-user { margin-top: 1rem; font-size: .82rem; opacity: .75; }
+
+/* Chart cards */
+.card-title { font-size: 1.02rem; font-weight: 700; margin: 0; }
+.card-sub { font-size: .8rem; opacity: .6; margin: .1rem 0 .4rem; }
+.empty-state { display: grid; place-items: center; text-align: center;
+    border: 1px dashed rgba(128,128,128,.35); border-radius: 12px;
+    opacity: .7; font-size: .92rem; padding: 1rem; }
+
+/* v3 additions */
+.stTabs [data-baseweb="tab-list"] { gap: .35rem; }
+.onboard { text-align: center; padding: 2.2rem 1rem; border: 1px dashed rgba(128,128,128,.4); border-radius: 16px; }
+.onboard h3 { margin: 0 0 .3rem; }
+.msg-pill { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+.role-chip { font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px;
+    background: rgba(37,99,235,.12); color: #2563EB; margin-left: .35rem; }
+.totals-box { padding: .8rem 1rem; border-radius: 12px; border: 1px solid rgba(128,128,128,.24);
+    background: rgba(128,128,128,.06); font-size: .92rem; }
+.totals-box div { display: flex; justify-content: space-between; padding: .12rem 0; }
+.totals-box .grand { font-weight: 800; border-top: 1px solid rgba(128,128,128,.3); margin-top: .25rem; padding-top: .35rem; }
