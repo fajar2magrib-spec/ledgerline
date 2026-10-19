@@ -1,0 +1,25 @@
+   [client]
+   toolbarMode = "minimal"
+   showErrorDetails = "none"
+   showSidebarNavigation = false
+
+   [server]
+   headless = true
+   enableXsrfProtection = true
+   enableCORS = true
+   runOnSave = false
+   maxUploadSize = 10
+
+   [runner]
+   fastReruns = true
+   enforceSerializableSessionState = false
+
+   [browser]
+   gatherUsageStats = false
+
+   [logger]
+   level = "info"
+
+   [theme]
+   primaryColor = "#2563EB"
+   font = "sans serif"
