@@ -12,11 +12,12 @@ from ..i18n import language_picker, t
 from ..db import database_info
 from ..events import Actor
 from ..formatting import CURRENCIES
-from ..services import audit
+from ..security import MIN_PASSWORD_LENGTH
+from ..services import audit, users
 from ..services.settings import save_settings
 from . import auth_ui
 from .components import (PAGE_BANKING, PAGE_ADMIN, PAGE_CLIENTS, PAGE_CUSTOMIZE, PAGE_DASHBOARD, PAGE_EXPENSES, PAGE_HELP, PAGE_INVOICE, PAGE_PAYMENTS,
-                         PAGE_PRODUCTS, PAGE_REPORTS, button_width, can, invalidate, logo_bytes, settings)
+                         PAGE_PRODUCTS, PAGE_REPORTS, button_width, can, fail, flash, invalidate, logo_bytes, settings)
 
 
 @st.cache_data(show_spinner=False)
@@ -93,11 +94,34 @@ def render(actor: Actor, stamp: tuple, invoice_count: int) -> str:
                                key="backup_csv", **button_width())
         st.markdown(f'<div class="side-user">{t("Signed in as")} <b>{escape(actor.username)}</b>'
                     f'<span class="role-chip">{escape(t(actor.role))}</span></div>', unsafe_allow_html=True)
+        _change_password_box(actor)
         if st.button(t("Sign out"), key="logout", **button_width()):
             auth_ui.logout()
         if not auth_ui.cookies_supported():
             st.caption(t("Sessions end on refresh: install extra-streamlit-components."))
     return page
+
+
+def _change_password_box(actor: Actor) -> None:
+    """Every user (viewer, manager, admin) can change their own password."""
+    with st.expander(t("Change my password"), expanded=False):
+        with st.form("change_own_password", clear_on_submit=True, border=False):
+            current = st.text_input(t("Current password"), type="password", key="pw_current", autocomplete="current-password")
+            new = st.text_input(t("Password (min {MIN_PASSWORD_LENGTH} characters)", MIN_PASSWORD_LENGTH=MIN_PASSWORD_LENGTH),
+                                type="password", key="pw_new", autocomplete="new-password")
+            again = st.text_input(t("Repeat password"), type="password", key="pw_new2", autocomplete="new-password")
+            submitted = st.form_submit_button(t("Change password"), **button_width())
+        if submitted:
+            if new != again:
+                st.error(t("The passwords do not match."))
+                return
+            try:
+                users.change_own_password(actor, current, new, keep_jti=st.session_state.get("auth_jti"))
+            except (users.UserError, PermissionError) as exc:
+                fail(exc)
+            else:
+                flash(t("Password changed. Your other devices were signed out."))
+                st.rerun()
 
 
 def render_minimal(actor: Actor) -> None:

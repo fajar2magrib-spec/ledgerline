@@ -183,8 +183,10 @@ def render_login() -> None:
     with _shell(cfg.app_name, t("Sign in to continue")):
         with st.container(border=True):
             with st.form("login_form"):
-                username = st.text_input(t("Username"), key="login_user")
-                password = st.text_input(t("Password"), type="password", key="login_pass")
+                # autocomplete: Streamlit marks every password box "new-password", which makes Chrome keep suggesting a
+                # strong password. On a sign-in form the browser should offer the SAVED login instead.
+                username = st.text_input(t("Username"), key="login_user", autocomplete="username")
+                password = st.text_input(t("Password"), type="password", key="login_pass", autocomplete="current-password")
                 submitted = st.form_submit_button(t("Sign in"), type="primary")
         if not cookies_supported():
             st.caption(t("Tip: install extra-streamlit-components to stay signed in after a refresh."))

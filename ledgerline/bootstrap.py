@@ -29,6 +29,7 @@ def start() -> BootInfo:
     cfg = get_config()
     init_schema()
     created = users.bootstrap_admin_from_config()
+    users.reset_admin_from_config()  # only acts when ADMIN_RESET_PASSWORD is set (forgotten administrator password)
     outbox.start_worker()
     backup.start_worker()  # automatic, verified database backups (SQLite)
     info = database_info()

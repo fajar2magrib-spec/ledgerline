@@ -171,3 +171,30 @@ def test_stylesheet_keeps_sidebar_toggle_visible():
     assert "stExpandSidebarButton" in css and "stSidebarCollapseButton" in css
     assert "stToolbar" not in css and "display: none !important; }" not in css.split("Page chrome")[1].split("2. Sidebar")[0].replace("footer, #MainMenu { display: none !important; }", "")
 
+
+def test_login_boxes_tell_the_browser_it_is_a_sign_in_form(env, ui):
+    users.create_user(None, "boss", "Original-pass-1", "admin")
+    at = AppTest.from_file(APP, default_timeout=120).run()
+    assert at.text_input(key="login_user").proto.autocomplete == "username"
+    assert at.text_input(key="login_pass").proto.autocomplete == "current-password"
+
+
+def test_change_my_password_box_works_for_a_viewer(env, ui):
+    users.create_user(None, "boss", "Original-pass-1", "admin")
+    users.create_user(users.list_users()[0].actor(), "vera", "Viewer-pass-77", "viewer")
+    at = signed_in("vera", "Viewer-pass-77")
+
+    def submit(current, new, again):
+        at.text_input(key="pw_current").set_value(current)
+        at.text_input(key="pw_new").set_value(new)
+        at.text_input(key="pw_new2").set_value(again)
+        btn(at, "Change password").click().run()
+
+    submit("not-my-password-1", "Fresh-pass-2024", "Fresh-pass-2024")      # wrong current password
+    assert exc(at) == [] and any("current password is not correct" in e.value for e in at.error)
+    submit("Viewer-pass-77", "Fresh-pass-2024", "Different-pass-1")        # typo in the repeat
+    assert any("do not match" in e.value for e in at.error)
+    submit("Viewer-pass-77", "Fresh-pass-2024", "Fresh-pass-2024")         # correct
+    assert exc(at) == [] and at.error == []
+    assert users.authenticate("vera", "Fresh-pass-2024").user is not None
+    assert at.session_state["authenticated"] is True                       # still signed in on this device

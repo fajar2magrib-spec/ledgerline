@@ -49,6 +49,24 @@ Use the included `Dockerfile`. Add a PostgreSQL service and set these variables 
 Free-tier behaviour: the app goes to sleep after about 12 hours without visitors (a visitor clicks the wake-up button and waits
 about a minute), and the free Neon database pauses after 5 idle minutes (the next request is a little slower). Neon Free gives 0.5 GB.
 
+
+## Forgot the administrator password
+Nothing can read a password back (they are stored one-way), but the server owner can set a new one:
+1. On Streamlit Community Cloud open the app's **Settings -> Secrets** and add a line (at least 10 characters, letters AND digits):
+   `ADMIN_RESET_PASSWORD = "A-new-password-2026"`
+   Optionally also `ADMIN_RESET_USERNAME = "the-admin-username"`. Without it the oldest active administrator is reset.
+2. Save. The app restarts and the password is replaced (everyone is signed out). If you forgot the username too, open
+   **Manage app -> Logs**: the line "Administrator '...': password reset" shows it.
+3. Sign in, then open **Change my password** in the sidebar and choose your own. Then **delete the ADMIN_RESET_PASSWORD line**
+   from Secrets. It only acts once per value, so leaving it does not overwrite your new password, but it should not stay.
+Any signed-in user (viewer, manager, admin) can change their own password from the sidebar.
+
+## Signed out after a browser refresh (Streamlit Community Cloud)
+The app keeps you signed in through a browser cookie. Streamlit Community Cloud filters browser cookies at its proxy, so a full
+page refresh signs you out there; on your own computer, Render, Docker and similar hosts it does not. Moving between pages
+inside the app never signs you out. The sign-in boxes are marked as a sign-in form, so Chrome offers the SAVED password: after a
+refresh, tap the saved login instead of typing.
+
 ## Tester checklist (send this to your testers)
 1. Sign in, change your password.
 2. Add a client with a phone number (pick the country).

@@ -119,6 +119,8 @@ class AppConfig:
     encryption_key: Optional[str]
     bootstrap_admin_username: Optional[str]
     bootstrap_admin_password: Optional[str]
+    reset_admin_username: Optional[str]
+    reset_admin_password: Optional[str]
     login_max_attempts: int
     login_lockout_minutes: int
     manager_edit_window_days: int
@@ -206,6 +208,8 @@ def get_config() -> AppConfig:
         encryption_key=setting("ENCRYPTION_KEY"),
         bootstrap_admin_username=setting("ADMIN_USERNAME"),
         bootstrap_admin_password=setting("ADMIN_PASSWORD"),
+        reset_admin_username=setting("ADMIN_RESET_USERNAME"),
+        reset_admin_password=setting("ADMIN_RESET_PASSWORD"),
         login_max_attempts=_number("LOGIN_MAX_ATTEMPTS", 5),
         login_lockout_minutes=_number("LOGIN_LOCKOUT_MINUTES", 15),
         manager_edit_window_days=_number("MANAGER_EDIT_WINDOW_DAYS", 7),

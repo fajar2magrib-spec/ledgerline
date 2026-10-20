@@ -1,3 +1,14 @@
+# Changes in v10 (from v9)
+
+* **Change my password**: every signed-in user (viewer, manager, admin) can change their own password from the sidebar
+  (needs the current password, signs out their other devices).
+* **Forgotten administrator password**: set `ADMIN_RESET_PASSWORD` (optional `ADMIN_RESET_USERNAME`) in the host's secrets and
+  restart; applied once per value. See DEPLOY.md.
+* **Sign-in boxes** are marked `username` / `current-password`, so Chrome offers the saved login instead of repeatedly
+  suggesting a strong password.
+* DEPLOY.md explains why a full refresh signs you out on Streamlit Community Cloud (it filters cookies at its proxy).
+* Tests: 48 pass (also on PostgreSQL).
+
 # Changes in v9 (from v8)
 
 * **Ready for free cloud hosting (Streamlit Community Cloud + Neon Postgres).** The PostgreSQL driver is now in `requirements.txt`,

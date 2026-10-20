@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import secrets
 from dataclasses import dataclass
 from datetime import timedelta
@@ -13,7 +14,9 @@ from .. import security
 from ..config import get_config
 from ..db import read_session, write_session
 from ..events import Actor, acting_as, log_event
-from ..models import AuthSession, User, utcnow
+from ..models import AppSetting, AuthSession, User, utcnow
+
+log = logging.getLogger(__name__)
 
 
 class UserError(ValueError):
@@ -82,6 +85,50 @@ def bootstrap_admin_from_config() -> bool:
         return False
     create_user(None, cfg.bootstrap_admin_username, cfg.bootstrap_admin_password, "admin", "Administrator")
     return True
+
+
+_RESET_MARKER = "admin_reset_applied"
+
+
+def reset_admin_from_config() -> Optional[str]:
+    """Recovery for a forgotten administrator password, driven by the host's secrets.
+
+    Set ``ADMIN_RESET_PASSWORD`` (and optionally ``ADMIN_RESET_USERNAME``) in the environment / Streamlit Secrets and restart.
+    Without a username the oldest active administrator is reset. Only whoever controls the server configuration can do this.
+    It is applied ONCE per password value: leaving the setting in place does not overwrite a password changed later.
+    Returns the username that was reset, or None.
+    """
+    cfg = get_config()
+    new_password = cfg.reset_admin_password
+    if not new_password:
+        return None
+    with write_session() as s:
+        marker = s.get(AppSetting, _RESET_MARKER)
+        if marker is not None and security.verify_password(new_password, marker.value):
+            return None                                   # this reset password was already applied
+        query = select(User).where(User.role == "admin", User.is_active).order_by(User.id)
+        wanted = (cfg.reset_admin_username or "").strip().lower()
+        if wanted:
+            query = query.where(User.username == wanted)
+        user = s.scalars(query.limit(1)).first()
+        if user is None:
+            log.warning("ADMIN_RESET_PASSWORD is set but no matching active administrator was found.")
+            return None
+        problems = security.password_problems(new_password, user.username)
+        if problems:
+            log.warning("ADMIN_RESET_PASSWORD was not applied: %s", " ".join(problems))
+            return None
+        with acting_as(Actor(None, "recovery", "admin")):
+            user.password_hash = security.hash_password(new_password)
+            user.failed_logins, user.locked_until = 0, None
+            if marker is None:
+                s.add(AppSetting(key=_RESET_MARKER, value=security.hash_password(new_password)))
+            else:
+                marker.value = security.hash_password(new_password)
+        username, user_id = user.username, user.id
+    revoke_user_sessions(user_id)
+    log.warning("Administrator '%s': password reset from ADMIN_RESET_PASSWORD. Remove that setting now.", username)
+    return username
 
 
 # ------------------------------------------------------------------------ login
@@ -156,10 +203,12 @@ def revoke_session(jti: str) -> None:
                   .values(revoked_at=utcnow()))
 
 
-def revoke_user_sessions(user_id: int) -> None:
+def revoke_user_sessions(user_id: int, except_jti: Optional[str] = None) -> None:
+    stmt = update(AuthSession).where(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None))
+    if except_jti:
+        stmt = stmt.where(AuthSession.id != except_jti)
     with write_session() as s:
-        s.execute(update(AuthSession).where(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None))
-                  .values(revoked_at=utcnow()))
+        s.execute(stmt.values(revoked_at=utcnow()))
 
 
 # ------------------------------------------------------------------ administration
@@ -187,6 +236,26 @@ def update_user(actor: Actor, user_id: int, *, role: Optional[str] = None, is_ac
             user.is_active = is_active
     if role is not None or is_active is False:
         revoke_user_sessions(user_id)  # the change applies on their very next click
+
+
+def change_own_password(actor: Actor, current_password: str, new_password: str, keep_jti: Optional[str] = None) -> None:
+    """Any signed-in user changes THEIR OWN password. Needs the current password; other devices are signed out."""
+    with write_session() as s:
+        user = s.get(User, actor.user_id) if actor.user_id else None
+        if user is None or not user.is_active:
+            raise UserError("User not found.")
+        if not security.verify_password(current_password, user.password_hash):
+            raise UserError("The current password is not correct.")
+        problems = security.password_problems(new_password, user.username)
+        if new_password == current_password:
+            problems.append("Choose a password you have not used just now.")
+        if problems:
+            raise UserError(" ".join(problems))
+        with acting_as(actor):
+            user.password_hash = security.hash_password(new_password)
+            user.failed_logins, user.locked_until = 0, None
+        user_id = user.id
+    revoke_user_sessions(user_id, except_jti=keep_jti)
 
 
 def reset_password(actor: Actor, user_id: int, new_password: str) -> None:
